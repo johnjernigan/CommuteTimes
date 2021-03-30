@@ -1,0 +1,15 @@
+---
+title: "Data"
+author: "John Jerrnigan"
+date: "3/30/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+

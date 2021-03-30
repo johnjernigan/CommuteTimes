@@ -1,0 +1,12 @@
+---
+title: 'ECON 345: Term Paper Outline'
+subtitle: 'Commute Times and Quality of Life in North Carolina Counties'
+author: "John Jerrnigan"
+date: "3/31/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
