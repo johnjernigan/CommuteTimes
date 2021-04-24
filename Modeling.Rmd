@@ -5,26 +5,297 @@ date: "3/30/2021"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(kableExtra)
+library(nnet)
+library(MASS)
+library(broom)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r, warning=FALSE, message=FALSE}
+transit <- read_csv("data/transitFinal.csv")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+simpleModel <- multinom(data = transit, qolTier ~ travelAvg + govPer + constructionPer + healthPer + retailPer + hospPer + insurancePer + droveCarPer + bicyclePer + carpooledPer + walkedPer + publicTransitPer + otherPer + workHomePer + outCountyPer + outStatePer + urbanPer)
+
+multinomFullTable <- tidy(simpleModel)
+names(multinomFullTable)[names(multinomFullTable) == "y.level"] <- "Tier"
+
+tier2Simple <- multinomFullTable[1:18, c(2, 1, 3, 4,6)]
+tier3Simple <- multinomFullTable[19:36, c(1, 3, 4, 6)]
+
+multinomFullSimple <- cbind(tier2Simple, tier3Simple)
+
+coeffNames <- c("(Intercept)",
+                            "Avg. Commute Time",
+                            "Pct. Work in Government",
+                            "Pct. Work in Construction",
+                            "Pct. Work in Health",
+                            "Pct. Work in Retail",
+                            "Pct. Work in Hospitality",
+                            "Pct. Work in Insurance",
+                            "Pct. Drove Car",
+                            "Pct. Biked",
+                            "Pct. Carpooled",
+                            "Pct. Walked",
+                            "Pct. Public Transit",
+                            "Pct. Other Transit",
+                            "Pct. Work from Home",
+                            "Pct. Work out of County",
+                            "Pct. Work out of State",
+                            "Pct. Live in Urban Area")
+
+names(multinomFullSimple) <- c("Term", "Tier 2", "Est.", "SE", "P-value",
+                               "Tier 3", "Est. ", "SE ", "P-value ")
+
+multinomFullSimple$Term <- coeffNames
+
+kable(multinomFullSimple, "simple", digits = 3)
+
+write_csv(multinomFullSimple, "data/multinomFullSimple.csv")
+```
+
+```{r, message=FALSE}
+step1 <- step(simpleModel, direction = "both", trace = 0)
+multinomStepTable <- tidy(step1)
+
+tier2StepSimple <- multinomStepTable[1:11, c(2, 1, 3, 4,6)]
+tier3StepSimple <- multinomStepTable[12:22, c(1, 3, 4, 6)]
+
+multinomStepSimple <- cbind(tier2StepSimple, tier3StepSimple)
+
+coeffNames <- c("(Intercept)",
+                            "Pct. Work in Government",
+                            "Pct. Work in Construction",
+                            "Pct. Work in Hospitality",
+                            "Pct. Drove Car",
+                            "Pct. Walked",
+                            "Pct. Public Transit",
+                            "Pct. Other Transit",
+                            "Pct. Work from Home",
+                            "Pct. Work out of County",
+                            "Pct. Work out of State")
+
+names(multinomStepSimple) <- c("Term", "Tier 2", "Est.", "SE", "P-value",
+                               "Tier 3", "Est. ", "SE ", "P-value ")
+
+multinomStepSimple$Term <- coeffNames
+
+kable(multinomStepSimple, "simple", digits = 3)
+
+write_csv(multinomStepSimple, "data/multinomStepSimple.csv")
+```
+
+```{r}
+simpleModel2 <- multinom(data = transit, qolTier ~ commute0_14Per +commute15_29Per +commute30_44Per + 
+                          commute45Per + govPer + constructionPer + healthPer + retailPer + hospPer +
+                          insurancePer + droveCarPer + bicyclePer + carpooledPer + walkedPer +
+                          publicTransitPer + otherPer + workHomePer + outCountyPer + outStatePer + urbanPer)
+
+multinomFullTable <- tidy(simpleModel2)
+names(multinomFullTable)[names(multinomFullTable) == "y.level"] <- "Tier"
+
+tier2Simple <- multinomFullTable[1:21, c(2, 1, 3, 4,6)]
+tier3Simple <- multinomFullTable[22:42, c(1, 3, 4, 6)]
+
+multinomFullSimple <- cbind(tier2Simple, tier3Simple)
+
+coeffNames <- c("(Intercept)",
+                            "Pct. Commuting 0-15 Min.",
+                            "Pct. Commuting 15-30 Min.",
+                            "Pct. Commuting 30-45 Min.", 
+                            "Pct. Commuting 45+ Min.",
+                            "Pct. Work in Government",
+                            "Pct. Work in Construction",
+                            "Pct. Work in Health",
+                            "Pct. Work in Retail",
+                            "Pct. Work in Hospitality",
+                            "Pct. Work in Insurance",
+                            "Pct. Drove Car",
+                            "Pct. Biked",
+                            "Pct. Carpooled",
+                            "Pct. Walked",
+                            "Pct. Public Transit",
+                            "Pct. Other Transit",
+                            "Pct. Work from Home",
+                            "Pct. Work out of County",
+                            "Pct. Work out of State",
+                            "Pct. Live in Urban Area")
+
+names(multinomFullSimple) <- c("Term", "Tier 2", "Est.", "SE", "P-value",
+                               "Tier 3", "Est. ", "SE ", "P-value ")
+
+multinomFullSimple$Term <- coeffNames
+
+kable(multinomFullSimple, "simple", digits = 3)
+
+#write_csv(multinomFullSimple, "data/multinomFullSimple.csv")
+```
+
+```{r, message=FALSE}
+step2 <- step(simpleModel2, direction = "both", trace = 0)
+tidy(step2)
+```
+
+```{r, message=FALSE}
+step2 <- step(simpleModel2, direction = "both", trace = 0)
+multinomStepTable2 <- tidy(step2)
+
+tier2StepSimple <- multinomStepTable2[1:12, c(2, 1, 3, 4,6)]
+tier3StepSimple <- multinomStepTable2[13:24, c(1, 3, 4, 6)]
+
+multinomStepSimple <- cbind(tier2StepSimple, tier3StepSimple)
+
+coeffNames <- c("(Intercept)",
+                            "Pct. Work in Government",
+                            "Pct. Work in Construction",
+                            "Pct. Work in Retail",
+                            "Pct. Drove Car",
+                            "Pct. Walked",
+                            "Pct. Public Transit",
+                            "Pct. Other Transit",
+                            "Pct. Work from Home",
+                            "Pct. Work out of County",
+                            "Pct. Work out of State",
+                            "Pct. Living in Urban Area")
+
+names(multinomStepSimple) <- c("Term", "Tier 2", "Est.", "SE", "P-value",
+                               "Tier 3", "Est. ", "SE ", "P-value ")
+
+multinomStepSimple$Term <- coeffNames
+
+kable(multinomStepSimple, "simple", digits = 3)
+
+write_csv(multinomStepSimple, "data/multinomStepSimple.csv")
+```
+
+```{r}
+simpleModel3 <- multinom(data = transit, qolTier ~ travelAvg + govPer + constructionPer + healthPer +
+                           retailPer + hospPer + insurancePer + droveCarPer + bicyclePer + carpooledPer +
+                           walkedPer +publicTransitPer + otherPer + workHomePer + outCountyPer + 
+                           outStatePer + urbanPer + travelAvg*govPer + travelAvg*constructionPer +
+                           travelAvg*healthPer + travelAvg*retailPer + travelAvg*hospPer + 
+                           travelAvg*insurancePer + urbanPer*droveCarPer + urbanPer*bicyclePer +
+                           urbanPer*carpooledPer + urbanPer*walkedPer + urbanPer*publicTransitPer +
+                           urbanPer*otherPer, model = TRUE)
+tidy(simpleModel3)
+```
+
+```{r, message=FALSE}
+step3 <- step(simpleModel3, direction = "both", trace = 0)
+tidy(step3)
+```
+
+```{r, message=FALSE}
+step3 <- step(simpleModel3, direction = "both", trace = 0)
+multinomFullTable <- tidy(step3)
+
+tier2Step <- multinomFullTable[1:15, c(2, 1, 3, 4,6)]
+tier3Step <- multinomFullTable[16:30, c(1, 3, 4, 6)]
+
+multinomFullStep <- cbind(tier2Step, tier3Step)
+
+coeffNames <- c("(Intercept)",
+                            "Avg. Commute Time",
+                            "Pct. Work in Government",
+                            "Pct. Work in Retail",
+                            "Pct. Drove Car",
+                            "Pct. Carpooled",
+                            "Pct. Walked",
+                            "Pct. Public Transit",
+                            "Pct. Other Transit",
+                            "Pct. Work out of State",
+                            "Pct. Live in Urban Area",
+                            "Pct. Drove:Pct. Urban",
+                            "Pct. Carpooled:Pct Urban",
+                            "Pct. Walked: Pct. Urban",
+                            "Pct. Public Trans: Pct. Urban")
+
+names(multinomFullStep) <- c("Term", "Tier 2", "Est.", "SE", "P-value",
+                               "Tier 3", "Est. ", "SE ", "P-value ")
+
+multinomFullStep$Term <- coeffNames
+
+kable(multinomFullStep, "simple", digits = 3)
+
+write_csv(multinomFullStep, "data/multinomFullStep.csv")
+```
+
+```{r}
+OIM <- multinom(qolTier ~ 1, data = transit)
+```
+
+```{r}
+anova(OIM,step3)
+```
+
+
+```{r Walds Z}
+z <- summary(step3)$coefficients/summary(step3)$standard.errors
+z
+```
+
+```{r 2-tailed z-test}
+p <- (1 - pnorm(abs(z), 0, 1)) * 2
+p
+```
+
+```{r}
+chisq.test(transit$qolTier,predict(step3))
+```
+
+```{r}
+library("DescTools")
+PseudoR2(step3, which = c("CoxSnell","Nagelkerke","McFadden"))
+```
+
+```{r}
+head(step3$fitted.values, 30)
+```
+
+```{r}
+head(predict(step3), 30)
+```
+
+predictedTier
+```{r}
+predictedTier <- as.character(predict(step3))
+
+transitPreds <- transit%>%
+  mutate(predictedTier)
+
+write_csv(transitPreds, "data/transitPreds.csv")
+```
+
+```{r}
+library(summarytools)
+ctable <- table(transit$qolTier,predict(step3))
+ctable
+```
+
+84.2% predictive accuracy for Tier 3
+74.3% predictive accuracy for Tier 2
+73.9% for Tier 1
+
+Predicted Tier 3 20% of the time
+Predicted Tier 2 39% of the time
+Predicted Tier 1 41% of the time
+
+```{r}
+predVals <- c('Predicted:', 'Tier 1', 'Tier 2', 'Tier 3')
+pred1 <- c(' ', 34, 11, 1)
+pred2 <- c(' ', 6, 26, 3)
+pred3 <- c(' ', 1, 2, 16)
+classification_df <- data.frame(predVals, pred1, pred2, pred3)
+colnames(classification_df) <- c("Actual:", "Tier 1", "Tier 2", "Tier 3")
+classification_df
+
+write.csv(classification_df, "data/classificationMatrix.csv")
+```
+

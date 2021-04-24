@@ -5,11 +5,273 @@ date: "3/30/2021"
 output: pdf_document
 ---
 
-```{r setup, include=FALSE, message=FALSE}
+```{r setup, include=FALSE, message=FALSE, warning = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
 library(tidyverse)
+library(ggplot2)
+library(sf)
+library(GGally)
 ```
 
+```{r, message=FALSE}
+nc <- read_sf('data/NCDOT_County_Boundaries/NCDOT_County_Boundaries.shp')
+county_df <- read_csv('data/county.csv')
+
+
+county_df$FIPS <- gsub("^.{0,2}", "", county_df$FIPS)
+
+county_df$FIPS <- as.numeric(as.character(county_df$FIPS))
+names(county_df)[names(county_df) == "2019 Est Avg
+Travel Time To
+Work, Minutes
+(ACS)"] <- "travelAvg"
+
+names(county_df)[names(county_df) == "2021 Tier\ndesignation\n(NCDOC\nLEAD)"] <- "qolTier"
+
+names(county_df)[names(county_df) == "2019 Est\nPopulation\n(ACS)"] <- "population2019" 
+
+names(county_df)[names(county_df) == "2019 %\nWorked in\nState\nCounty of\nResidence\n(ACS)"] <- "inCountyWorkPer"
+
+names(county_df)[names(county_df) == "2019 %\nWorked in\nState\nOutside\nCounty of\nResidence\n(ACS)"] <- "outCountyPer"
+
+names(county_df)[names(county_df) == "2019 % Worked\nOutside State\nof Residence\n(ACS)"] <- "outStatePer"
+
+names(county_df)[names(county_df) == "2010\nCensus\n%\nUrban\nPop"] <- "urbanPer"
+
+names(county_df)[names(county_df) == "2010\nCensus\n% Rural\nPop"] <- "ruralPer"
+
+names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% < 10\nminutes (ACS)"] <- "travel10Per"                          
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 10-14\nminutes (ACS)"] <- "travel14Per"                        
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 15-19\nminutes (ACS)"] <- "travel19Per"                          
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 20-24\nminutes (ACS)"] <- "travel24Per"                          
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 25-29\nminutes (ACS)"] <- "travel29Per"                          
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 30-34\nminutes (ACS)"] <- "travel34Per"                          
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 35-44\nminutes (ACS)"] <- "travel44Per"                          
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 45-59\nminutes (ACS)"] <- "travel59Per"                          
+ names(county_df)[names(county_df) == "2019 Travel\nTime to Work\n% 60+ minutes\n(ACS)"] <- "travel1HRPer"                            
+ names(county_df)[names(county_df) == "2019\nWorking\nAway from\nHome\n(ACS)"] <- "workAway"                                      
+ names(county_df)[names(county_df) == "2019 %\nWorking\nfrom\nHome\n(ACS)"] <- "workHomePer"                                         
+ names(county_df)[names(county_df) == "2019\n%\nDrove\nCar\nTruck\nVan\nAlone\n(ACS)"] <- "droveCarPer"                              
+ names(county_df)[names(county_df) == "2019 %\nCarpooled\nCar\nTruck\nVan (ACS)"] <- "carpooledPer"                                   
+ names(county_df)[names(county_df) == "2019 %\nPublic\nTransp\n(ACS)"] <- "publicTransitPer"                                              
+ names(county_df)[names(county_df) == "2019 %\nWalked\n(ACS)"] <- "walkedPer"                                                      
+ names(county_df)[names(county_df) == "2019 %\nBicycle\n(ACS)"] <- "bicyclePer"                                                     
+ names(county_df)[names(county_df) == "2019 %\nTaxi,\nMotorcycle,\nOther (ACS)"] <- "otherPer" 
+ 
+names(county_df)[names(county_df) == "2019\nEmployment\nAll\nIndustries\n(QCEW)"] <- "employedPop"                                  
+names(county_df)[names(county_df) == "2019\nEmployment\nGovernment\n(QCEW)"] <- "employedGov"                                       
+names(county_df)[names(county_df) == "2019\nEmployment\nPrivate\nIndustry\n(QCEW)"] <- "employedPrivate"                                
+names(county_df)[names(county_df) == "2019 Employment\nAgriculture\nForestry Fishing\nHunting (QCEW)"] <- "employedAgriculture"             
+names(county_df)[names(county_df) == "2019\nEmployment\nMining\n(QCEW)"] <- "employedMining"                                           
+names(county_df)[names(county_df) == "2019\nEmployment\nUtilities\n(QCEW)"] <- "employedUtilities"                                        
+names(county_df)[names(county_df) == "2019\nEmployment\nConstruction\n(QCEW)"] <- "employedConstruction"                                     
+names(county_df)[names(county_df) == "2019\nEmployment\nManufacturing\n(QCEW)"] <- "employedManufacturing"                                    
+names(county_df)[names(county_df) == "2019\nEmployment\nWholesale\nTrade\n(QCEW)"] <- "employedWholesale"                                 
+names(county_df)[names(county_df) == "2019\nEmployment\nRetail Trade\n(QCEW)"] <- "employedRetail"                                     
+names(county_df)[names(county_df) == "2019\nEmployment\nTransportation\nWarehousing\n(QCEW)"] <- "employedTransitWarehousing"                      
+names(county_df)[names(county_df) == "2019\nEmployment\nInformation\n(QCEW)"] <- "employedInfo"                                      
+names(county_df)[names(county_df) == "2019\nEmployment\nFinance\nInsurance\n(QCEW)"] <- "employedFinInsurance"                               
+names(county_df)[names(county_df) == "2019\nEmployment\nReal Estate\nRental Leasing\n(QCEW)"] <- "employedLeasing"                      
+names(county_df)[names(county_df) == "2019\nEmployment\nProfessional\nTechnical\nServices (QCEW)"] <- "employedTech"                 
+names(county_df)[names(county_df) == "2019\nEmployment Mgt\nof Companies\nEnterprises\n(QCEW)"] <- "employmentMgmt"                    
+names(county_df)[names(county_df) == "2019\nEmployment\nAdministrative\nWaste Services\n(QCEW)"] <- "employedWaste"                   
+names(county_df)[names(county_df) == "2019\nEmployment\nEducational\nServices\n(QCEW)"] <- "employedEd"                            
+names(county_df)[names(county_df) == "2019\nEmployment\nHealth Care\nSocial\nAssistance\n(QCEW)"] <- "employedHealth"                  
+names(county_df)[names(county_df) == "2019\nEmployment\nArts Entertain\nRecreation\n(QCEW)"] <- "employedArts"                       
+names(county_df)[names(county_df) == "2019\nEmployment\nAccommodation\nFood Services\n(QCEW)"] <- "employedHosp"                     
+names(county_df)[names(county_df) == "2019 Employment\nOther Services\nEx. Public Admin\n(QCEW)"] <- "employedOther"                  
+names(county_df)[names(county_df) == "2019\nEmployment\nPublic\nAdmin\n(QCEW)"] <- "employedPublicAdmin"                                    
+names(county_df)[names(county_df) == "2019\nEmployment\nUnclassified\n(QCEW)"] <- "employedUnclassified"
+
+county_df$qolTier <- as.factor(county_df$qolTier)
+
+county_df$travel10Per <- as.numeric(sub("%", "", county_df$travel10Per))
+county_df$travel14Per <- as.numeric(sub("%", "", county_df$travel14Per))
+county_df$travel19Per <- as.numeric(sub("%", "", county_df$travel19Per))
+county_df$travel24Per <- as.numeric(sub("%", "", county_df$travel24Per))
+county_df$travel29Per <- as.numeric(sub("%", "", county_df$travel29Per))
+county_df$travel34Per <- as.numeric(sub("%", "", county_df$travel34Per))
+county_df$travel44Per <- as.numeric(sub("%", "", county_df$travel44Per))
+county_df$travel59Per <- as.numeric(sub("%", "", county_df$travel59Per))
+county_df$travel1HRPer <- as.numeric(sub("%", "", county_df$travel1HRPer))
+
+county_df$carpooledPer <- as.numeric(sub("%", "", county_df$carpooledPer))
+county_df$walkedPer <- as.numeric(sub("%", "", county_df$walkedPer))
+county_df$publicTransitPer <- as.numeric(sub("%", "", county_df$publicTransitPer))
+county_df$droveCarPer <- as.numeric(sub("%", "", county_df$droveCarPer))
+county_df$bicyclePer <- as.numeric(sub("%", "", county_df$bicyclePer))
+county_df$otherPer <- as.numeric(sub("%", "", county_df$otherPer))
+
+county_df$outCountyPer <- as.numeric(sub("%", "", county_df$outCountyPer))
+county_df$outStatePer <- as.numeric(sub("%", "", county_df$outStatePer))
+county_df$workHomePer <- as.numeric(sub("%", "", county_df$workHomePer))
+
+county_df$urbanPer <- as.numeric(sub("%", "", county_df$urbanPer))
+```
+
+```{r}
+county_df <- county_df%>%
+  mutate(govPer = employedGov/employedPop)%>%
+  mutate(constructionPer = employedConstruction/employedPop)%>%
+  mutate(retailPer = employedRetail/employedPop)%>%
+  mutate(insurancePer = employedFinInsurance/employedPop)%>%
+  mutate(healthPer = employedHealth/employedPop)%>%
+  mutate(hospPer = employedHosp/employedPop)%>%
+  mutate(commute0_14Per = travel10Per + travel14Per)%>%
+  mutate(commute15_29Per = travel19Per + travel24Per + travel29Per)%>%
+  mutate(commute30_44Per = travel34Per + travel44Per)%>%
+  mutate(commute45Per = travel59Per + travel1HRPer)
+```
+
+```{r}
+transitPreds <- read.csv("data/transitPreds.csv")
+```
+
+```{r}
+county_map_df <- left_join(nc, county_df, by = "FIPS")
+county_map_pred <- left_join(nc, transitPreds, by = "FIPS")
+
+county_map_pred$predictedTier <- as.factor(county_map_pred$predictedTier)
+```
+
+```{r}
+colfunc<-colorRampPalette(c("red","yellow","green"))
+```
+
+```{r}
+ggplot(data = county_map_df) +
+  geom_sf(aes(fill = travelAvg)) + 
+  scale_fill_gradient2(midpoint = mean(county_map_df$travelAvg),
+                       low = "green",
+                       mid = "yellow",
+                       high = "red") +
+  labs(x = "Longitude",
+       y = "Latitude",
+       fill = "Avg. commute (Min)") +
+  theme_minimal()
+
+ggsave('figures/commute_map.png')
+```
+
+```{r}
+ggplot(data = county_map_df) +
+  geom_sf(aes(fill = qolTier)) + 
+  scale_fill_manual(values = c("red", 
+                               "yellow", 
+                               "green")) + 
+  labs(x = "Longitude",
+       y = "Latitude",
+       fill = "Distress level") +
+  theme_minimal()
+
+ggsave('figures/qol_map.png')
+```
+
+```{r}
+ggplot(data = county_map_pred) +
+  geom_sf(aes(fill = predictedTier)) + 
+  scale_fill_manual(values = c("red", 
+                               "yellow", 
+                               "green")) + 
+  labs(x = "Longitude",
+       y = "Latitude",
+       fill = "Distress level") +
+  theme_minimal()
+
+ggsave('figures/pred_map.png')
+```
+
+```{r}
+ggplot(data = county_df,
+       aes(x = travelAvg)) +
+  labs(x = "Average daily commute (minutes)",
+       y = "Count") +
+  geom_histogram(bins = 30) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(text = element_text(size=16))
+
+ggsave("figures/commute_hist.png")
+```
+
+```{r}
+ggplot(county_df, aes(x = qolTier, y = travelAvg, fill = qolTier)) +
+  geom_boxplot(size = .75) +
+  labs(x = "Distress level (3 is least distressed)",
+       y = "Average commute time") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  theme(text = element_text(size=16))
+
+ggsave("figures/AvgCommuteTimeBox.png")
+```
+
+
+```{r, message=FALSE}
+ggpairs(data = county_df[ ,c("govPer", 
+                             "insurancePer", 
+                             "retailPer", 
+                             "constructionPer", 
+                             "healthPer", 
+                             "hospPer")])+
+  theme_bw()
+
+ggsave("figures/CareerFieldsCorrPlot.png")
+```
+
+```{r, message=FALSE}
+ggpairs(data = county_df[ ,c("travel10Per", 
+                             "travel14Per", 
+                             "travel19Per", 
+                             "travel24Per", 
+                             "travel29Per", 
+                             "travel34Per",
+                             "travel44Per",
+                             "travel59Per",
+                             "travel1HRPer")])+
+  theme_bw()
+
+ggsave("figures/TravelTimeCorrPlot.png")
+```
+
+```{r, message=FALSE}
+ggpairs(data = county_df[ ,c("droveCarPer", 
+                             "carpooledPer", 
+                             "walkedPer", 
+                             "publicTransitPer", 
+                             "bicyclePer", 
+                             "otherPer")]) +
+  theme_bw()
+
+ggsave("figures/TransitMethodCorrPlot.png")
+```
+
+```{r, message=FALSE}
+ggpairs(data = county_df[ ,c("workHomePer", 
+                             "outCountyPer", 
+                             "outStatePer", 
+                             "qolTier")],
+        aes(color = qolTier)) +
+  theme_bw()
+
+ggsave("figures/WorkLocationCorrPlot.png")
+```
+
+```{r, message=FALSE}
+ggpairs(data = county_df[ ,c("commute0_14Per", 
+                             "commute15_29Per", 
+                             "commute30_44Per", 
+                             "commute45Per",
+                             "qolTier")],
+        aes(color = qolTier)) +
+  theme_bw()
+
+ggsave("figures/TravelTimeBinnedCorrPlot.png")
+```
+
+```{r , message=FALSE}
+write_csv(county_df, "data/transitFinal.csv")
+```
